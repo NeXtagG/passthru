@@ -1,0 +1,9 @@
+#!/bin/bash
+# libvirt hook dispatcher: runs /etc/libvirt/hooks/qemu.d/<vm>/<op>/<phase>/* in order.
+VM_NAME="$1"; VM_ACTION="$2"; VM_PHASE="$3"
+HOOK_DIR="/etc/libvirt/hooks/qemu.d/$VM_NAME/$VM_ACTION/$VM_PHASE"
+[ -d "$HOOK_DIR" ] || exit 0
+for script in "$HOOK_DIR"/*; do
+    [ -x "$script" ] || continue
+    "$script" "$@" || exit $?
+done
