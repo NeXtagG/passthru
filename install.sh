@@ -82,10 +82,13 @@ fi
 sudo virsh net-autostart default 2>/dev/null || true
 sudo virsh net-start     default 2>/dev/null || true
 # правила форвардинга/NAT под активный firewall (ufw/firewalld/nftables)
-if ( cd "$HERE" && /usr/bin/python3 -m passthru --print-netsetup ) >/tmp/passthru-net.sh 2>/dev/null; then
-    sudo bash /tmp/passthru-net.sh || warn "Настройка сети вернула ошибку — проверь вывод."
-    rm -f /tmp/passthru-net.sh
+# Скрипт — во временный файл с уникальным именем и правами 0600: под sudo нельзя запускать
+# файл с фиксированным путём в /tmp, его может подложить другой пользователь.
+net_sh="$(mktemp)"
+if ( cd "$HERE" && /usr/bin/python3 -m passthru --print-netsetup ) >"$net_sh" 2>/dev/null; then
+    sudo bash "$net_sh" || warn "Настройка сети вернула ошибку — проверь вывод."
 fi
+rm -f "$net_sh"
 
 # ---- 6. диспетчер хуков libvirt ----
 if [ ! -x /etc/libvirt/hooks/qemu ]; then
